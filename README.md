@@ -8,8 +8,8 @@ SPDX-License-Identifier: CC-BY-4.0
 
 ## Local Development
 
-\`\`\`bash
+```bash
 bundle install
 bundle exec jekyll serve
 # → http://localhost:4000
-\`\`\`
+```
