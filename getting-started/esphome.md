@@ -1,5 +1,5 @@
 ---
-title: ESPHome Setup
+title: ESPHome Setup in Home Assistant
 parent: Getting Started
 nav_order: 3
 ---

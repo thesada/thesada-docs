@@ -1,5 +1,5 @@
 ---
-title: Mosquitto MQTT Broker
+title: MQTT Integration in Home Assistant
 parent: Getting Started
 nav_order: 2
 ---

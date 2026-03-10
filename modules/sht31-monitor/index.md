@@ -21,11 +21,3 @@ A temperature and humidity monitoring node built on the Freenove ESP32-S3 WROOM 
 **Update interval:** 30 seconds
 
 **Alerts:** Hourly temperature and humidity report via Telegram in our test setup.
-
----
-
-## Pages
-
-- [Wiring](wiring.md)
-- [ESPHome Config](esphome-config.md)
-- [Home Assistant](home-assistant.md)

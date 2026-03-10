@@ -1,5 +1,5 @@
 ---
-title: Proxmox — HAOS Install
+title: Proxmox — Home Assistant OS Install
 parent: Getting Started
 nav_order: 1
 ---
