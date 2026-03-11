@@ -6,7 +6,7 @@ nav_order: 5
 
 # Telegram
 
-Telegram is used by all nodes for critical alerts — pump failures, temperature thresholds, boiler faults. This guide covers creating a Telegram bot, finding your chat ID, and adding it to Home Assistant.
+Telegram is used by all Thesada nodes for critical alerts — pump failures, temperature thresholds, boiler faults. This guide covers creating a Telegram bot, finding your chat ID, and adding it to Home Assistant.
 
 ---
 
@@ -28,7 +28,7 @@ Telegram is used by all nodes for critical alerts — pump failures, temperature
 
 ## 2. Get Your Chat ID
 
-1. Search for **@getidsbot** in Telegram
+1. Search for **@id_bot** in Telegram
 2. Send `/start`
 3. The bot will return your **chat ID** — copy it
 
@@ -90,3 +90,83 @@ action:
 Use `|-` for multiline messages to preserve line breaks.
 
 Full alert automation examples are covered in each module's documentation.
+
+---
+
+## Bot Commands
+
+The Telegram polling integration fires a `telegram_command` event when the bot receives a command. You can handle multiple commands in a single automation using `choose`.
+
+### Setup
+
+All bot command automations follow the same structure. Create via **Settings → Automations → Create Automation → Edit in YAML**.
+
+### Example — /temp and /getpic
+
+The automation below handles two commands: `/temp` returns sensor readings, `/getpic` sends a camera snapshot.
+
+```yaml
+alias: Telegram Bot Commands
+description: Handle bot commands
+triggers:
+  - trigger: event
+    event_type: telegram_command
+    event_data:
+      command: /temp
+  - trigger: event
+    event_type: telegram_command
+    event_data:
+      command: /getpic
+actions:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.command == '/temp' }}"
+        sequence:
+          - action: notify.send_message
+            data:
+              entity_id: notify.YOUR_NOTIFY_ENTITY
+              message: |-
+                Thesada — Current Readings:
+                {{ states('sensor.YOUR_TEMP_ENTITY') | round(1) }}°C
+                {{ states('sensor.YOUR_HUMIDITY_ENTITY') | round(1) }}%
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.command == '/getpic' }}"
+        sequence:
+          - action: camera.snapshot
+            data:
+              entity_id: camera.YOUR_CAMERA_ENTITY
+              filename: /config/tmp/snapshot.jpg
+          - action: telegram_bot.send_photo
+            data:
+              verify_ssl: true
+              entity_id:
+                - notify.YOUR_NOTIFY_ENTITY
+              file: /config/tmp/snapshot.jpg
+mode: single
+```
+
+### /getpic — Required Setup
+
+The `camera.snapshot` action writes to `/config/tmp/`. Two things required before this works:
+
+**1. Create the folder** via the HA terminal:
+
+```bash
+mkdir /config/tmp
+```
+
+**2. Add the path to `allowlist_external_dirs` in `configuration.yaml`:**
+
+```yaml
+homeassistant:
+  allowlist_external_dirs:
+    - /config/tmp
+```
+
+Restart Home Assistant after editing `configuration.yaml`.
+
+### Adding More Commands
+
+Each new command is an additional trigger and a new `conditions` / `sequence` block inside `choose`. Keep all commands in a single automation to avoid event conflicts.
