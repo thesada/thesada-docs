@@ -238,6 +238,26 @@ A brief pulse on the AXP2101 CHGLED (blue LED) at a configurable interval. Usefu
 }
 ```
 
+**PMU init (also handled here):**
+
+`HeartbeatLED::begin()` initialises the AXP2101 for the full board, not just the LED. The following settings are applied on every boot regardless of whether the heartbeat is enabled:
+
+| Setting | Value | Reason |
+|---|---|---|
+| `setVbusVoltageLimit` | 4.36V | Accept power from a dumb USB charger (no data lines) |
+| `setVbusCurrentLimit` | 1500mA | Allow sufficient input current from wall adapter |
+| `disableTSPinMeasure` | - | TS pin (battery temp sensor) is not connected — must disable or PMU blocks charging |
+| `enableBattVoltageMeasure` | - | Required for `getBattVoltage()` and `getBatteryPercent()` |
+| `enableVbusVoltageMeasure` | - | Required for VBUS voltage reading |
+| `enableSystemVoltageMeasure` | - | Required for system rail voltage reading |
+| `enableBattDetection` | - | Required for `isBatteryConnect()` |
+
+> **Note:** Without `setVbusVoltageLimit` and `setVbusCurrentLimit`, the board will not power on from a wall adapter — only from a laptop or powered USB hub (which provide data line negotiation). This is an AXP2101 default behaviour.
+
+> **Note:** Without `disableTSPinMeasure`, the PMU will not charge a connected battery. The TS pin is a battery temperature input that is floating on the T-SIM7080-S3, which the PMU interprets as a fault condition.
+
+Reference: [Xinyuan-LilyGO/LilyGo-T-SIM7080G](https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G) examples (MIT licence).
+
 ---
 
 ## OTA Update (OTAUpdate)
