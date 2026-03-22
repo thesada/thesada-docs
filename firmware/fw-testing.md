@@ -38,6 +38,30 @@ The script runs 13 test groups — 6 fully automated (parses serial output), 7 m
 
 ---
 
+## 0. Pre-flight: CA Certificate + First Flash
+
+Before first flash, ensure `data/ca.crt` contains the correct root CA. For Let's Encrypt brokers (including `mqtt.thesada.app`) and GitHub OTA, the ISRG Root X1 covers both:
+
+```bash
+curl -s https://letsencrypt.org/certs/isrgrootx1.pem -o base/data/ca.crt
+```
+
+Verify:
+```bash
+openssl x509 -in base/data/ca.crt -noout -subject -issuer
+# subject=CN=ISRG Root X1
+# issuer=CN=ISRG Root X1  (self-signed root — correct)
+```
+
+Upload filesystem (includes `ca.crt` and `config.json`):
+```bash
+pio run -e esp32-s3-dev --target uploadfs
+```
+
+If `ca.crt` is absent or wrong, TLS still connects but logs `[WRN][MQTT] No CA cert — insecure`. MQTT and OTA will work but without certificate verification.
+
+---
+
 ## 1. Boot + Config
 
 | Check | Expected |
@@ -238,12 +262,21 @@ Trigger an alert. Netcat should receive the POST with `{"value":"[overheat] ..."
 
 | Check | Expected |
 |---|---|
-| SD inserted, device boots | `[INF][SD] Mounted — X.X MB` + `Logging to /log00N.csv` |
+| SD inserted, device boots | `[INF][SD] Mounted — X.X MB` + `Logging to /log00N.csv (max 1024 KB per file)` |
 | After first sensor read | CSV row: `2026-03-22T14:32:00Z,temperature,{...}` |
 | `ls /sd/` | Log files visible |
 | `cat /sd/log001.csv` | CSV rows with timestamps |
 | `"sd": { "enabled": false }` | `[INF][SD] Disabled` — no mount |
 | Config backup button | `/config_backup.json` on SD |
+
+**Logrotate test:**
+
+Set `sd.max_file_kb` to a small value (e.g. `2`) and wait for a few sensor reads. The device should log:
+```
+[INF][SD] Rotating — /log001.csv full
+[INF][SD] Logging to /log002.csv
+```
+Both files should appear in `ls /sd/`. Reset `max_file_kb` to `1024` when done.
 
 ---
 

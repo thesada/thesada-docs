@@ -436,13 +436,31 @@ Accessible at `http://[device-ip]/` — requires login (credentials from `web` c
 
 ## SD Card Logging
 
-Logs sensor events as CSV to `/log001.csv`, `/log002.csv`, ... (new file each boot).
+Logs sensor events as CSV. A new file is opened on each boot; when `sd.max_file_kb` is exceeded the module rotates to the next file automatically.
 
-CSV format: `timestamp,sensor,json_data`
+**File naming:** `/log001.csv`, `/log002.csv`, … up to `/log999.csv`.
 
-Timestamp is ISO 8601 UTC (`2025-03-21T14:32:00Z`) when NTP is synced; falls back to `ms/<millis>` before sync.
+**CSV format:** `timestamp,sensor,json_data`
 
-Disable via `"sd": { "enabled": false }` in config.json.
+Timestamp is ISO 8601 UTC (`2026-03-22T14:32:00Z`) when NTP is synced; falls back to `ms/<millis>` before sync.
+
+**Logrotate config** (`config.json`):
+```json
+"sd": {
+  "enabled":     true,
+  "max_file_kb": 1024
+}
+```
+- `max_file_kb: 1024` — rotate to the next file when current exceeds 1 MB
+- `max_file_kb: 0` — no size limit (file grows indefinitely until next boot)
+
+When a rotation happens the log shows:
+```
+[INF][SD] Rotating — /log001.csv full
+[INF][SD] Logging to /log002.csv
+```
+
+Disable logging entirely via `"sd": { "enabled": false }`.
 Config backup via `/api/backup` copies `config.json` to `/config_backup.json` on SD.
 
 ---
@@ -484,17 +502,23 @@ No other files touched.
 
 ## Dependencies
 
-| Library | Purpose |
-|---|---|
-| Arduino framework (ESP32) | Base framework |
-| ArduinoJson v7 | JSON config + event payloads |
-| LittleFS | Filesystem (config, CA cert, Lua scripts) |
-| PubSubClient | WiFi MQTT client |
-| ESPAsyncWebServer + AsyncTCP | Web server + WebSocket |
-| ESP-Arduino-Lua | Lua 5.3 runtime (GPL-3.0) |
-| TinyGSM | AT command modem driver |
-| XPowersLib | AXP2101 PMU control |
-| DallasTemperature + OneWire | DS18B20 sensors |
-| Adafruit ADS1X15 | ADS1115 ADC |
-| HTTPClient + WiFiClientSecure | OTA manifest fetch + TLS |
-| mbedtls (built-in) | SHA256 verification for OTA |
+| Library | Version | Purpose |
+|---|---|---|
+| Arduino framework (ESP32) | espressif32 @ 6.13.0 | Base framework |
+| ArduinoJson | 7.4.3 | JSON config + event payloads |
+| LittleFS | built-in | Filesystem (config, CA cert, Lua scripts) |
+| PubSubClient | 2.8 | WiFi MQTT client |
+| ESPAsyncWebServer + AsyncTCP | git / vendored | Web server + WebSocket |
+| ESP-Arduino-Lua | git | Lua 5.3 runtime (GPL-3.0) |
+| TinyGSM | 0.12.0 | AT command modem driver |
+| XPowersLib | git | AXP2101 PMU control |
+| DallasTemperature + OneWire | 4.0.6 / 2.3.8 | DS18B20 sensors |
+| Adafruit ADS1X15 | 2.6.2 | ADS1115 ADC |
+| HTTPClient + WiFiClientSecure | built-in | OTA manifest fetch + TLS |
+| mbedtls | built-in | SHA256 verification for OTA |
+
+> **`espressif32` 6.13.0 requires `intelhex`** in the PlatformIO Python environment (used to build the bootloader). Install once:
+> ```bash
+> ~/.local/pipx/venvs/platformio/bin/python -m pip install intelhex
+> ```
+> Run `python scripts/check_deps.py` to check all dependencies against their latest published versions.
