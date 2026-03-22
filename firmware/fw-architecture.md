@@ -221,6 +221,25 @@ end)
 
 ---
 
+## Heartbeat LED (HeartbeatLED)
+
+A brief pulse on the AXP2101 CHGLED (blue LED) at a configurable interval. Useful for confirming the device is alive without checking serial output.
+
+**Config** (`device.heartbeat_s` in `config.json`):
+- `-1` — disabled (default)
+- `≥ 5` — pulse every N seconds (values below 5 are clamped to 5)
+
+**Implementation:** Uses `Wire1` (I2C bus 1, SDA=15 SCL=7) so it does not share state with `Wire` (I2C bus 0, used by ADS1115 on the external bus). Calls `pmu.setChargingLedMode(XPOWERS_CHG_LED_ON)` for 150 ms, then `XPOWERS_CHG_LED_OFF`. No RTOS tasks or timers — checked in `loop()`.
+
+```json
+"device": {
+  "name": "thesada-node",
+  "heartbeat_s": 10
+}
+```
+
+---
+
 ## OTA Update (OTAUpdate)
 
 HTTP(S) pull-based OTA. The device fetches a JSON manifest, compares semver, and streams + verifies the firmware binary.

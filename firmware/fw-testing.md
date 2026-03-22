@@ -59,7 +59,19 @@ Should show all `[PASS]` with at most a few `[WARN]` for optional items.
 
 ---
 
-## 2. Shell (serial + WebSocket)
+## 2. Heartbeat LED
+
+| Check | Expected |
+|---|---|
+| `config.get device.heartbeat_s` returns `-1` | LED stays off — disabled |
+| Set `device.heartbeat_s` to `10`, restart | `[INF][Heartbeat] Ready — every 10s` in boot log |
+| Wait 10–12 s | Blue CHGLED pulses once (~150 ms) |
+| Set `device.heartbeat_s` to `3` (below minimum) | Clamped to 5 s automatically |
+| Set `device.heartbeat_s` to `-1`, restart | `[INF][Heartbeat] Disabled` — LED stays off |
+
+---
+
+## 3. Shell (serial + WebSocket)
 
 The same commands work in both the serial terminal and the web terminal.
 
@@ -87,7 +99,7 @@ The same commands work in both the serial terminal and the web terminal.
 
 ---
 
-## 3. Web Dashboard
+## 4. Web Dashboard
 
 | Check | Expected |
 |---|---|
@@ -100,7 +112,7 @@ The same commands work in both the serial terminal and the web terminal.
 
 ---
 
-## 4. Config Editor
+## 5. Config Editor
 
 | Check | Expected |
 |---|---|
@@ -118,7 +130,7 @@ curl -X POST http://[ip]/api/config \
 
 ---
 
-## 5. Lua Scripting
+## 6. Lua Scripting
 
 | Check | Expected |
 |---|---|
@@ -131,7 +143,7 @@ curl -X POST http://[ip]/api/config \
 
 ---
 
-## 6. OTA (pull-based)
+## 7. OTA (pull-based)
 
 | Check | Expected |
 |---|---|
@@ -144,7 +156,7 @@ curl -X POST http://[ip]/api/config \
 
 ---
 
-## 7. OTA (push via web)
+## 8. OTA (push via web)
 
 | Check | Expected |
 |---|---|
@@ -154,7 +166,7 @@ curl -X POST http://[ip]/api/config \
 
 ---
 
-## 8. Temperature Alerts
+## 9. Temperature Alerts
 
 Set `temp_high_c` just below current room temperature to trigger immediately.
 
@@ -169,7 +181,7 @@ Set `temp_high_c` just below current room temperature to trigger immediately.
 
 ---
 
-## 9. Webhook
+## 10. Webhook
 
 Set `webhook.url` to a local netcat listener:
 ```bash
@@ -181,7 +193,7 @@ Trigger an alert. Netcat should receive the POST with `{"value":"[overheat] ..."
 
 ---
 
-## 10. SD Card Logging
+## 11. SD Card Logging
 
 | Check | Expected |
 |---|---|
@@ -194,7 +206,7 @@ Trigger an alert. Netcat should receive the POST with `{"value":"[overheat] ..."
 
 ---
 
-## 11. Cellular Fallback
+## 12. Cellular Fallback
 
 | Check | Expected |
 |---|---|
