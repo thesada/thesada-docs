@@ -170,14 +170,36 @@ Shell::registerCommand("name", "one-line help text", [](int argc, char** argv, S
 
 **Built-in commands:**
 
-| Group | Commands |
+| Command | Output |
 |---|---|
-| System | `help`, `version`, `restart`, `heap`, `uptime`, `sensors`, `selftest` |
-| Filesystem | `ls`, `cat`, `rm`, `write`, `mv`, `df` |
-| Config | `config.get`, `config.set`, `config.save`, `config.reload`, `config.dump` |
-| Network | `ifconfig`, `ping`, `ntp`, `mqtt` |
-| Modules | `module.list`, `module.status` |
-| Lua | `lua.exec`, `lua.load`, `lua.reload` |
+| `help` | List all commands |
+| `version` | Firmware version, build date |
+| `restart` | Reboot device |
+| `heap` | Free, min free, max alloc bytes |
+| `uptime` | Days + HH:MM:SS |
+| `sensors` | All configured sensors with addresses/pins/mux/gain + battery reading |
+| `battery` | Voltage, percent, charging state |
+| `selftest` | 10-point check with pass/fail/warn per item |
+| `ls [path]` | Directory listing with file sizes |
+| `cat <path>` | Print file contents |
+| `rm <path>` | Remove file (echoes path) |
+| `write <path> <content>` | Write content to file (echoes bytes written) |
+| `mv <src> <dst>` | Rename/move (echoes src -> dst) |
+| `df` | LittleFS + SD usage in bytes/MB |
+| `config.get <key>` | Read config value by dot notation |
+| `config.set <key> <value>` | Set + save + reload (echoes key = value) |
+| `config.save` | Save to flash (echoes bytes written) |
+| `config.reload` | Reload from flash (echoes device name) |
+| `config.dump` | Print full config JSON |
+| `ifconfig` | SSID, IP, gateway, DNS, RSSI, MAC |
+| `ping <host>` | DNS resolve test (echoes resolved IP) |
+| `ntp` | Sync status, UTC time, epoch, server, offset |
+| `mqtt` | Connected/disconnected, broker, port, prefix |
+| `module.list` | Compiled modules with [x]/[ ] toggles |
+| `module.status` | Runtime state per module (sensor counts, intervals, pins, SD mount, Telegram direct) |
+| `lua.exec <code>` | Execute inline Lua, show return value |
+| `lua.load <path>` | Execute Lua file from LittleFS |
+| `lua.reload` | Hot-reload scripts (echoes which scripts are present) |
 
 Paths prefixed with `/sd/` are routed to SD_MMC; all others go to LittleFS.
 
@@ -495,12 +517,12 @@ Accessible at `http://[device-ip]/` — requires login (credentials from `web` c
 | `/api/info` | GET | public | Firmware version, build date, device name |
 | `/api/state` | GET | public | Current sensor readings as JSON (includes `_mqtt` metadata) |
 | `/api/config` | GET | yes | Read `config.json` |
-| `/api/config` | POST | yes | Write `config.json`, restart device |
+| `/api/config` | POST | yes | Write `config.json`, restart device (page auto-refreshes after 10s) |
 | `/api/backup` | POST | yes | Copy `config.json` to SD card |
 | `/api/cmd` | POST | yes | Run any Shell command, get JSON output |
 | `/api/restart` | POST | yes | Reboot device |
 | `/api/ws/token` | GET | yes | Issue a 30 s IP-bound WS auth grant (required before opening WebSocket) |
-| `/ota` | POST | yes | Upload firmware `.bin` (push OTA) |
+| `/ota` | POST | yes | Upload firmware `.bin` (push OTA, page auto-refreshes after 10s) |
 | `/ws/serial` | WS | token | Bidirectional terminal — log stream + all Shell commands |
 
 **Dashboard** — public read-only view:
