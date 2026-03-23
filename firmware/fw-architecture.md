@@ -418,12 +418,13 @@ Optional HTTP POST fired on every alert:
 ```yaml
 automation:
   - alias: "Thesada Node Alert → Telegram"
-    trigger:
-      - platform: mqtt
+    triggers:
+      - trigger: mqtt
         topic: thesada/node/alert
-    action:
-      - service: notify.telegram
+    actions:
+      - action: notify.send_message
         data:
+          entity_id: notify.telegram_notify
           message: "{{ trigger.payload_json.value }}"
 ```
 
@@ -494,7 +495,7 @@ See `data/config.json.example` for all fields. Key sections:
                 "topic_prefix": "thesada/node", "send_interval_s": 0 },
   "ota":      { "manifest_url": "", "check_interval_s": 21600 },
   "lua":      { "reload_topic": "" },
-  "temperature": { "pin": 45, "interval_s": 60, "auto_discover": true, "sensors": [] },
+  "temperature": { "pin": 12, "interval_s": 60, "auto_discover": true, "sensors": [] },
   "ads1115":  { "i2c_sda": 1, "i2c_scl": 2, "address": 72, "interval_s": 60, "channels": [...] },
   "cellular": { "apn": "OSC", "sim_pin": "", "rf_settle_ms": 15000, "reg_timeout_ms": 180000 },
   "sd":       { "enabled": true, "pin_clk": 38, "pin_cmd": 39, "pin_data": 40 },

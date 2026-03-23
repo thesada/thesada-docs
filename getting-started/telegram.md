@@ -95,7 +95,7 @@ Full alert automation examples are covered in each module's documentation.
 
 ## Bot Commands
 
-The Telegram polling integration fires a `telegram_command` event when the bot receives a command. You can handle multiple commands in a single automation using `choose`.
+The Telegram webhook integration fires a `telegram_command` event when the bot receives a command. You can handle multiple commands in a single automation using `choose`. Webhook mode requires HTTPS (already configured in the [DNS & SSL guide](ha-dns-ssl)).
 
 ### Setup
 
