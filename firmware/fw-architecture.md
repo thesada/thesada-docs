@@ -2,6 +2,7 @@
 title: Architecture
 parent: Firmware
 nav_order: 1
+description: "thesada-fw firmware architecture — ModuleRegistry, EventBus, Shell, PowerManager, OTA, Lua scripting, and MQTT over TLS on ESP32-S3."
 ---
 
 # Firmware Architecture
@@ -56,13 +57,15 @@ thesada-fw/base/
     │   ├── Shell.h/.cpp            ← unified CLI (serial + WebSocket share same handlers)
     │   ├── ScriptEngine.h/.cpp     ← Lua 5.3 runtime with EventBus + MQTT bindings
     │   ├── Cellular.h/.cpp         ← SIM7080G modem-native MQTT over TLS
+    │   ├── PowerManager.h/.cpp     ← AXP2101 PMU init, battery getters, heartbeat LED
     │   └── WebServer.h/.cpp        ← dashboard, config editor, file browser, terminal
     └── modules/
         ├── temperature/            ← DS18B20 one-wire sensors
         ├── ads1115/                ← ADS1115 differential current sensing
+        ├── battery/                ← AXP2101 battery monitoring (voltage, percent, charging)
         ├── cellular/               ← cellular module (alert routing via LTE)
         ├── sd/                     ← SD card CSV logger
-        ├── telegram/               ← temperature threshold alerts + webhook
+        ├── telegram/               ← temperature + battery threshold alerts + webhook
         └── pwm/                    ← PWM output
 ```
 
@@ -80,7 +83,8 @@ setup()
   else:
     Cellular::begin()     → PMU, modem, SIM, network, modem-MQTT
   WebServer::begin()      → HTTP dashboard + WebSocket terminal
-  Shell::begin()          → registers all 27 built-in commands
+  PowerManager::begin()   → AXP2101 init (VBUS limits, TS pin, battery ADC, charger enable), LED mode
+  Shell::begin()          → registers all built-in commands
   ScriptEngine::begin()   → Lua state, executes main.lua + rules.lua
                             registers MQTT cmd/lua/reload handler
   ModuleRegistry::begin() → begin() on all enabled modules
@@ -143,6 +147,7 @@ EventBus::subscribe("temperature", [](JsonObject data) {
 |---|---|---|
 | `temperature` | TemperatureModule | `{ "sensors": [ { "name": "x", "address": "...", "temp_c": 18.4 } ] }` |
 | `current` | ADS1115Module | `{ "channels": [ { "name": "x", "voltage_v": 0.012, "raw": 123 } ] }` |
+| `battery` | BatteryModule | `{ "present": true, "voltage_v": 3.91, "percent": 35, "charging": false }` |
 | `alert` | TelegramModule | `{ "value": "alert message text" }` |
 
 ---
@@ -221,40 +226,54 @@ end)
 
 ---
 
-## Heartbeat LED (HeartbeatLED)
+## Power Manager (PowerManager)
 
-A brief pulse on the AXP2101 CHGLED (blue LED) at a configurable interval. Useful for confirming the device is alive without checking serial output.
+`PowerManager` manages the AXP2101 PMU on every boot — VBUS power acceptance, battery charging, ADC enable — and drives the AXP2101 CHGLED (blue LED) as a heartbeat or charge indicator.
 
-**Config** (`device.heartbeat_s` in `config.json`):
-- `-1` — disabled (default)
-- `≥ 5` — pulse every N seconds (values below 5 are clamped to 5)
-
-**Implementation:** Uses `Wire1` (I2C bus 1, SDA=15 SCL=7) so it does not share state with `Wire` (I2C bus 0, used by ADS1115 on the external bus). Calls `pmu.setChargingLedMode(XPOWERS_CHG_LED_ON)` for 150 ms, then `XPOWERS_CHG_LED_OFF`. No RTOS tasks or timers — checked in `loop()`.
-
-```json
-"device": {
-  "name": "thesada-node",
-  "heartbeat_s": 10
-}
-```
-
-**PMU init (also handled here):**
-
-`HeartbeatLED::begin()` initialises the AXP2101 for the full board, not just the LED. The following settings are applied on every boot regardless of whether the heartbeat is enabled:
+**PMU init — runs unconditionally on every boot:**
 
 | Setting | Value | Reason |
 |---|---|---|
-| `setVbusVoltageLimit` | 4.36V | Accept power from a dumb USB charger (no data lines) |
-| `setVbusCurrentLimit` | 1500mA | Allow sufficient input current from wall adapter |
-| `disableTSPinMeasure` | - | TS pin (battery temp sensor) is not connected — must disable or PMU blocks charging |
-| `enableBattVoltageMeasure` | - | Required for `getBattVoltage()` and `getBatteryPercent()` |
+| `setVbusVoltageLimit` | 4.36V | Accept power from a dumb USB charger (no data lines / D+D- handshake) |
+| `setVbusCurrentLimit` | 1500mA | Allow sufficient input current from wall adapter or solar |
+| `disableTSPinMeasure` | - | TS pin (battery temp sensor) is not connected — floating pin causes the PMU to block charging |
+| `enableCellbatteryCharge` | - | Explicitly enable the main battery charger circuit |
+| `enableBattVoltageMeasure` | - | Required for voltage and percent readings |
 | `enableVbusVoltageMeasure` | - | Required for VBUS voltage reading |
 | `enableSystemVoltageMeasure` | - | Required for system rail voltage reading |
 | `enableBattDetection` | - | Required for `isBatteryConnect()` |
 
-> **Note:** Without `setVbusVoltageLimit` and `setVbusCurrentLimit`, the board will not power on from a wall adapter — only from a laptop or powered USB hub (which provide data line negotiation). This is an AXP2101 default behaviour.
+> **Note:** Without `setVbusVoltageLimit` and `setVbusCurrentLimit`, the board will not power on from a wall adapter — only from a PC or powered hub (which negotiate current via USB data lines). This is AXP2101 default behaviour.
 
-> **Note:** Without `disableTSPinMeasure`, the PMU will not charge a connected battery. The TS pin is a battery temperature input that is floating on the T-SIM7080-S3, which the PMU interprets as a fault condition.
+> **Note:** `enableCellbatteryCharge()` must be called explicitly. The charger is not auto-enabled after PMU init.
+
+**Battery getters (used by BatteryModule and Shell):**
+
+| Method | Returns |
+|---|---|
+| `PowerManager::isPmuOk()` | `bool` — PMU I2C init succeeded |
+| `PowerManager::isBatteryPresent()` | `bool` — battery connected |
+| `PowerManager::getVoltage()` | `float` — battery voltage in V |
+| `PowerManager::getPercent()` | `int` — state of charge 0–100, or -1 |
+| `PowerManager::isCharging()` | `bool` — charger circuit active |
+
+**LED modes** (`device` section of `config.json`):
+
+| `heartbeat_s` | `charging_led` | LED behaviour |
+|---|---|---|
+| `≥ 5` | any | Heartbeat pulse every N seconds |
+| `-1` | `true` (default) | Hardware-driven charge indicator (on while charging) |
+| `-1` | `false` | Always off |
+
+**Implementation:** Uses `Wire1` (SDA=15 SCL=7) — independent of `Wire` (I2C bus 0, used by ADS1115). No RTOS tasks or timers; LED state is managed in `loop()`.
+
+```json
+"device": {
+  "name":         "thesada-node",
+  "heartbeat_s":  -1,
+  "charging_led": true
+}
+```
 
 Reference: [Xinyuan-LilyGO/LilyGo-T-SIM7080G](https://github.com/Xinyuan-LilyGO/LilyGo-T-SIM7080G) examples (MIT licence).
 
@@ -378,7 +397,13 @@ automation:
 - Periodic WiFi recheck every 15 min (configurable); reverts to WiFi when available
 
 ### CA certificate
-No certificate is compiled in. Place your CA cert PEM as `data/ca.crt` and upload to LittleFS (`pio run --target uploadfs`). Both WiFi MQTT and the cellular modem load it at boot. If absent, TLS connects without certificate verification and a warning is logged.
+No certificate is compiled in. Place a CA cert PEM bundle as `data/ca.crt` and upload to LittleFS (`pio run --target uploadfs`). Multiple certs can be concatenated in one file. Both WiFi MQTT and the OTA HTTPS client load it at boot. If absent, TLS connects without certificate verification and a warning is logged.
+
+The production bundle contains two roots:
+- **ISRG Root X1** — covers Let's Encrypt (MQTT broker, release-assets.githubusercontent.com)
+- **USERTrust ECC Certification Authority** — covers github.com (OTA manifest fetch)
+
+You can also upload `ca.crt` at runtime via `POST /api/file?path=/ca.crt&source=littlefs` without reflashing the filesystem.
 
 ### AsyncTCP (vendored)
 AsyncTCP v3.3.2 is vendored in `lib/AsyncTCP/` with null-pointer guards added to `_accept`, `_s_accept`, and `_s_accepted`. These prevent `LoadProhibited` crashes (EXCVADDR 0x00000030) when lwIP calls TCP callbacks with a null PCB or freed server pointer.
@@ -388,11 +413,12 @@ AsyncTCP v3.3.2 is vendored in `lib/AsyncTCP/` with null-pointer guards added to
 ## Compile-time config (`config.h`)
 
 ```cpp
-#define FIRMWARE_VERSION "1.0.10"
+#define FIRMWARE_VERSION "1.0.12"
 
 // Enable/disable modules
 #define ENABLE_TEMPERATURE
 #define ENABLE_ADS1115
+#define ENABLE_BATTERY       // AXP2101 battery monitoring (requires PowerManager)
 #define ENABLE_SD
 #define ENABLE_CELLULAR
 #define ENABLE_TELEGRAM
@@ -413,7 +439,7 @@ See `data/config.json.example` for all fields. Key sections:
 
 ```json
 {
-  "device":   { "name": "thesada-node", "friendly_name": "Thesada Node" },
+  "device":   { "name": "thesada-node", "friendly_name": "Thesada Node", "heartbeat_s": -1, "charging_led": true },
   "web":      { "user": "admin", "password": "changeme" },
   "wifi":     { "networks": [...], "timeout_per_ssid_s": 10, "wifi_check_interval_s": 900 },
   "ntp":      { "server": "pool.ntp.org", "tz_offset_s": 3600 },
@@ -426,7 +452,9 @@ See `data/config.json.example` for all fields. Key sections:
   "cellular": { "apn": "OSC", "sim_pin": "", "rf_settle_ms": 15000, "reg_timeout_ms": 180000 },
   "sd":       { "enabled": true, "pin_clk": 38, "pin_cmd": 39, "pin_data": 40 },
   "telegram": { "alerts": [ { "enabled": true, "name": "overheat", "temp_high_c": 40.0 } ] },
-  "webhook":  { "url": "", "message_template": "{{value}}" }
+  "webhook":  { "url": "", "message_template": "{{value}}" },
+  "battery":  { "interval_s": 60, "low_pct": 20 },
+  "ota":      { "enabled": true, "manifest_url": "https://github.com/Thesada/thesada-fw/releases/latest/download/firmware.json", "check_interval_s": 21600 }
 }
 ```
 
