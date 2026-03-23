@@ -357,7 +357,7 @@ Both files should appear in `ls /sd/`. Reset `max_file_kb` to `1024` when done.
 | `module.status` | `battery  pmu=ok  present=yes` |
 | `/api/state` includes `battery` object | `{"present":true,"voltage_v":X.XX,"percent":XX,"charging":false}` |
 | Dashboard shows Battery %, V, Charge State | Three rows in sensor table |
-| Set `battery.enabled` to `false`, restart | `[INF][Battery] Disabled via config` — no battery rows on dashboard |
+| Set `battery.enabled` to `false`, restart | `[INF][Battery] Disabled via config` - no battery rows on dashboard |
 | Set `battery.enabled` to `true`, restart | Battery monitoring resumes |
 
 ---
