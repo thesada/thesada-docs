@@ -158,7 +158,7 @@ curl -s -u admin:changeme \
   -X POST http://[ip]/api/cmd \
   -H 'Content-Type: application/json' \
   -d '{"cmd":"version"}'
-# → {"ok":true,"output":["thesada-fw v1.0.10 ..."]}
+# → {"ok":true,"output":["thesada-fw v1.x ..."]}
 
 # wrong password → 401
 curl -s -u admin:wrong \
@@ -170,7 +170,7 @@ curl -s -u admin:wrong \
 
 | Check | Expected |
 |---|---|
-| POST `/api/cmd` `{"cmd":"version"}` with correct password | `{"ok":true,"output":["thesada-fw v1.0.10 ..."]}` |
+| POST `/api/cmd` `{"cmd":"version"}` with correct password | `{"ok":true,"output":["thesada-fw v1.x ..."]}` |
 | POST `/api/cmd` `{"cmd":"heap"}` | `{"ok":true,"output":["Free: XXXXXX B ..."]}` |
 | POST `/api/cmd` `{"cmd":"xyzzy"}` | `{"ok":true,"output":["Unknown command: xyzzy"]}` |
 | POST `/api/cmd` with wrong password | `401 Unauthorized` |
