@@ -47,15 +47,36 @@ lua.exec MQTT.publish("thesada/node/cmd/ota", "check")
 
 ## MQTT Subscriptions
 
-`MQTTClient::subscribe(topic, callback)` stores subscriptions and re-applies them automatically on reconnect. Callbacks are dispatched by exact topic match in `onMessage()`.
+`MQTTClient::subscribe(topic, callback)` stores subscriptions and re-applies them automatically on reconnect. Callbacks are dispatched by exact topic match or trailing `/#` wildcard in `onMessage()`.
 
-Built-in subscriptions registered at boot:
+### MQTT CLI (v1.0.19+)
+
+The primary interface for remote management. Subscribe to `<prefix>/cli/#` - the topic is the command, the payload is the arguments. Response published to `<prefix>/cli/response` as JSON.
+
+```
+thesada/owb/cli/sensors          payload: ""              -> all sensors
+thesada/owb/cli/sensors          payload: "temp_1"        -> specific sensor
+thesada/owb/cli/config.set       payload: "mqtt.ha_discovery true"
+thesada/owb/cli/config.reload    payload: ""
+thesada/owb/cli/ota.check        payload: ""
+thesada/owb/cli/restart          payload: ""
+thesada/owb/cli/battery          payload: ""
+thesada/owb/cli/version          payload: ""
+```
+
+Response format:
+```json
+{"cmd": "sensors", "ok": true, "output": ["temp_1: 65.2C", "temp_2: 57.1C"]}
+```
+
+Any shell command works - same 30+ commands available over serial, WebSocket, HTTP, and now MQTT.
+
+### Legacy cmd/* topics (deprecated, will be removed)
 
 | Topic | Handler |
 |---|---|
-| `<prefix>/cmd/ota` | Trigger OTA manifest check |
-| `<prefix>/cmd/lua/reload` | Hot-reload Lua scripts |
-| `<prefix>/cmd/config/set` | Set single config key. Payload: `{"path": "telegram.cooldown_s", "value": "600"}` |
+| `<prefix>/cmd/ota` | Trigger OTA manifest check (use `cli/ota.check` instead) |
+| `<prefix>/cmd/config/set` | Set single config key (use `cli/config.set` instead) |
 | `<prefix>/cmd/config/push` | Replace full config.json. Payload: entire JSON config. Max 4 KB. |
 
 Modules and Lua scripts can add further subscriptions via `MQTTClient::subscribe()` or `MQTT.publish()` / `EventBus.subscribe()`.
@@ -70,7 +91,7 @@ Enabled by default. Disable with `mqtt.ha_discovery: false` in config.json.
 
 Discovery publishes entities for all configured sensors:
 - Temperature sensors (one per DS18B20, name from config)
-- ADS1115 channels (voltage + binary running sensor per channel)
+- ADS1115 channels (RMS current in amps + binary running sensor per channel)
 - Battery (percent, voltage, charge state, present)
 
 All entities are grouped under a single HA device (device name from `device.friendly_name`, manufacturer "Thesada", model "Base Node", sw_version from firmware).

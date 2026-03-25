@@ -36,11 +36,11 @@ Thesada nodes run one of two firmware approaches depending on the use case:
 | TLS MQTT | CA cert from LittleFS (`/ca.crt`); ISRG Root X1 works for Let's Encrypt brokers |
 | HA MQTT discovery | Auto-registers all sensors in Home Assistant on connect; no manual YAML needed |
 | DS18B20 temperature | OneWire, multi-sensor, auto-discovery, retry on disconnect, last-known-value fallback |
-| ADS1115 current sensing | Differential measurement, configurable gain |
+| ADS1115 current sensing | RMS sampling (30 samples over 2 cycles at 60Hz), outputs amps for SCT-013-030 |
 | Battery monitoring | AXP2101 voltage, state of charge, charge status; MQTT publish + low-battery alert |
 | SD card logging | CSV, per-boot files, configurable max file size with auto-rotation |
 | Lua scripting | Lua 5.3 runtime; hot-reloadable rules, EventBus + MQTT bindings |
-| Shell CLI | Commands over serial, WebSocket (`/ws/serial`), and HTTP (`POST /api/cmd`) |
+| Shell CLI | Commands over serial, WebSocket, HTTP (`POST /api/cmd`), and MQTT (`cli/#`) |
 | OTA - push | Upload `.bin` via web dashboard or curl |
 | OTA - pull | Fetch manifest from GitHub Releases, SHA256 verify, auto-install |
 | PowerManager LED | Blue CHGLED: heartbeat pulse, hardware charge indicator, or off |

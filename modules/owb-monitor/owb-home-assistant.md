@@ -15,7 +15,7 @@ Auto-discovery is enabled by default (`mqtt.ha_discovery: true`). A manual YAML 
 
 ## Prerequisites
 
-- OWB node flashed and online (thesada-fw v1.0.17+)
+- OWB node flashed and online (thesada-fw v1.0.19+)
 - Mosquitto MQTT broker running (see [MQTT Integration](../../home-assistant/mosquitto.md))
 - Telegram bot set up in Home Assistant (see [Telegram HA Integration](../../home-assistant/telegram.md))
 
@@ -38,8 +38,8 @@ This creates 12 entities:
 | `sensor.owb_house_return` | temperature | House loop return (C) |
 | `sensor.owb_barn_supply` | temperature | Barn loop supply (C) |
 | `sensor.owb_barn_return` | temperature | Barn loop return (C) |
-| `sensor.owb_house_pump_current` | measurement | House pump CT voltage (V) |
-| `sensor.owb_barn_pump_current` | measurement | Barn pump CT voltage (V) |
+| `sensor.owb_house_pump_current` | current | House pump RMS current (A) |
+| `sensor.owb_barn_pump_current` | current | Barn pump RMS current (A) |
 | `sensor.owb_battery_voltage` | voltage | Battery voltage (V) |
 | `sensor.owb_battery_percent` | battery | Battery level (%) |
 | `sensor.owb_battery_charging` | text | Charging / Discharging |
