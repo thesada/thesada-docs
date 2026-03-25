@@ -73,11 +73,12 @@ Any shell command works - same 30+ commands available over serial, WebSocket, HT
 
 Special command: `cli/file.write` - payload is `<path>\n<content>`. Use `mosquitto_pub -s` with stdin pipe (not `-m` or `-f`):
 ```bash
-printf '/scripts/alerts.lua\n' | cat - alerts.lua | mosquitto_pub ... -t '<prefix>/cli/file.write' -s
+printf '/scripts/rules.lua\n' | cat - rules.lua | mosquitto_pub ... -t '<prefix>/cli/file.write' -s
 ```
 
 **Known issues:**
-- `config.set` via MQTT CLI does not return a response (the config reload disconnects MQTT before the response is sent). The value is still saved - verify with `config.get` after reconnect.
+- `config.set` via MQTT CLI drops the connection (LittleFS write blocks PubSubClient keepalive). The value may not save. Use `cmd/config/push` (full config push) instead for remote config changes.
+- `config.set` no longer auto-reloads config. Run `config.reload` after to apply changes.
 - `file.write` via `mosquitto_pub -m` or `-f` writes 0 bytes. Use stdin pipe (`-s`) as shown above.
 
 ### Legacy cmd/* topics (deprecated, will be removed)

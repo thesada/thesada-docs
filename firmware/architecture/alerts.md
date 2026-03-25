@@ -3,83 +3,149 @@ title: Alerts & Webhook
 parent: Architecture
 grand_parent: Firmware
 nav_order: 5
-description: "Three-channel alerting (MQTT, Telegram Bot API, webhook), per-sensor cooldown, low-battery alerts, and HA automation examples."
+description: "Lua-driven alerting with sustain, cooldown, and three output channels (MQTT, Telegram, webhook)."
 ---
 
 # Alerts & Webhook
 
-## Alerts (TelegramModule)
+## Lua Alert Engine
 
-The `TelegramModule` subscribes to `temperature` and `battery` events and fires alerts when readings cross configured thresholds. Alerts are delivered via three independent channels:
+Alert logic lives in `/scripts/rules.lua` on LittleFS - hot-reloadable without recompiling. The firmware provides the bindings; the script defines the rules.
 
-1. **MQTT** - `MQTTClient` subscribes to the `alert` EventBus event and publishes to `<topic_prefix>/alert` as `{ "value": "..." }`
-2. **Telegram Bot API** - optional direct HTTPS call if `telegram.bot_token` and `telegram.chat_ids` are set. Sends to all chat IDs in the array.
-3. **HTTP webhook** - optional POST to `webhook.url` with configurable message template
+**Available Lua bindings for alerts:**
 
-All three channels fire independently. If `bot_token` or `chat_ids` are empty, the Telegram API call is skipped. If `webhook.url` is empty, the webhook is skipped. MQTT alerts always fire.
+| Function | Description |
+|---|---|
+| `EventBus.subscribe(event, fn)` | Subscribe to sensor events (`temperature`, `current`, `battery`) |
+| `Telegram.send(chat_id, msg)` | Send to a specific Telegram chat |
+| `Telegram.broadcast(msg)` | Send to all configured `chat_ids` |
+| `MQTT.publish(topic, payload)` | Publish alert to MQTT |
+| `Config.get(key)` | Read config values (supports dot notation and array indices) |
+| `Node.uptime()` | Current uptime in ms (for cooldown/sustain timing) |
+| `Node.setTimeout(ms, fn)` | Delayed execution (e.g. boot alerts after WiFi ready) |
+| `Log.warn(msg)` | Log alert to serial/WebSocket terminal |
 
-**Alert config in `config.json`:**
+**Telegram config (`config.json`):**
 
 ```json
 "telegram": {
-  "bot_token": "",
-  "chat_ids": [],
-  "cooldown_s": 300,
-  "alerts": [
-    { "enabled": true, "name": "overheat", "function": "gte", "value": 90.0, "message": "OVERHEAT", "sensors": [] },
-    { "enabled": true, "name": "freeze",   "function": "lte", "value": 2.0,  "message": "LOW TEMP", "sensors": ["temp_1", "temp_2"] }
+  "bot_token": "your-bot-token",
+  "chat_ids": ["123456789", "-100987654321"]
+}
+```
+
+Both array and object format supported for `chat_ids`:
+```json
+"chat_ids": {"daniel": "123456789", "family": "-100987654321"}
+```
+
+Object format enables per-recipient routing in Lua:
+```lua
+local daniel = Config.get("telegram.chat_ids.daniel")
+Telegram.send(daniel, "critical alert")
+```
+
+## Example rules.lua
+
+```lua
+local prefix = Config.get("mqtt.topic_prefix")
+local unit   = Config.get("temperature.unit") or "C"
+
+local sustain = {}
+local cooldown = {}
+local COOLDOWN_MS = 900000   -- 15 minutes
+local TEMP_SUSTAIN = 5       -- 5 readings or 5 minutes
+
+local function can_alert(key)
+  local now = Node.uptime()
+  if cooldown[key] and (now - cooldown[key]) < COOLDOWN_MS then
+    return false
+  end
+  cooldown[key] = now
+  return true
+end
+
+local function notify(msg)
+  Log.warn(msg)
+  Telegram.broadcast(msg)
+  MQTT.publish(prefix .. "/alert", msg)
+end
+
+-- Temperature: sustained low temp alert
+EventBus.subscribe("temperature", function(data)
+  for _, s in ipairs(data.sensors) do
+    local key = "low_temp:" .. s.name
+    if s.name == "House Supply" and s.temp_c <= 55 then
+      sustain[key] = (sustain[key] or 0) + 1
+      if sustain[key] >= TEMP_SUSTAIN and can_alert(key) then
+        notify(s.name .. ": " .. s.temp .. unit .. " - Low temp")
+        sustain[key] = 0
+      end
+    else
+      sustain[key] = 0
+    end
+  end
+end)
+
+-- Battery: immediate alert
+EventBus.subscribe("battery", function(data)
+  if data.present and data.percent <= 20 and not data.charging then
+    if can_alert("battery_low") then
+      notify("Battery low: " .. data.percent .. "%")
+    end
+  end
+end)
+```
+
+**EventBus data format (temperature):**
+
+```json
+{
+  "sensors": [
+    { "name": "House Supply", "temp_c": 54.4, "temp": 129.9, "address": "28..." }
   ]
 }
 ```
 
-| Field | Description |
-|---|---|
-| `bot_token` | Telegram Bot API token (from @BotFather). Empty = skip direct Telegram. |
-| `chat_ids` | Array of Telegram chat ID strings. Supports users and groups (negative IDs). |
-| `cooldown_s` | Minimum seconds between repeated alerts for the same sensor+rule (default 300). Recovery alerts always send immediately. |
-| `alerts` | Array of alert rules (see below) |
+- `temp_c` - always Celsius (use for thresholds)
+- `temp` - display unit (C or F depending on `temperature.unit` config)
 
-**Alert rule fields:**
+**Sustain pattern:** alert only fires after N consecutive readings cross the threshold. Prevents false alerts from single sensor glitches or brief temperature dips when loading fuel.
 
-| Field | Description |
-|---|---|
-| `enabled` | Enable/disable toggle per rule |
-| `name` | Rule name (used in log and message prefix) |
-| `function` | Comparison: `gt` (>), `gte` (>=), `lt` (<), `lte` (<=) |
-| `value` | Threshold value to compare against |
-| `message` | Alert label in the message (e.g. "OVERHEAT", "LOW TEMP"). Defaults to rule name. |
-| `sensors` | Array of sensor names to match. Empty array or omitted = all sensors. |
-
-- **Hysteresis**: alert fires only on state transition - no repeated messages
-- **Cooldown**: if a sensor oscillates around a threshold, the same alert will not re-fire until `cooldown_s` has elapsed. Recovery ("back to normal") always sends immediately and resets the cooldown.
-- **Sensor filter**: when `sensors` is set, only those named sensors trigger the rule. Useful for per-zone alerts (e.g. freeze alert only on outdoor sensors).
-- **Low battery**: fires when battery percent drops below `battery.low_pct` (default 20%) while not charging
-
-Alert state per `ruleName:sensorName`: `0` = normal, `1` = triggered.
-
-Message format: `[overheat] barn_supply: 42.10C - OVERHEAT (>= 90.0C)`
-
-**MQTT alerting via Lua (alternative):** alerts can also be published from Lua scripts without the TelegramModule:
-```lua
-MQTT.publish("thesada/node/alert", "custom alert message")
-```
+**Cooldown pattern:** after an alert fires, the same key won't fire again for `COOLDOWN_MS` milliseconds. Prevents alert spam when a condition persists.
 
 ---
 
 ## Webhook
 
-Optional HTTP POST fired on every alert:
+Optional HTTP POST fired from Lua or TelegramModule on every alert:
 
 ```json
 "webhook": {
-  "url":              "http://homeassistant.local:8123/api/webhook/thesada-alert",
+  "url": "http://homeassistant.local:8123/api/webhook/thesada-alert",
   "message_template": "{% raw %}{{value}}{% endraw %}"
 }
 ```
 
-`{% raw %}{{value}}{% endraw %}` is replaced with the full alert message. Supports `http://` and `https://` (`setInsecure()`). Leave `url` empty to disable.
+`{% raw %}{{value}}{% endraw %}` is replaced with the full alert message. Supports `http://` and `https://`. Leave `url` empty to disable.
 
-**Home Assistant automation for MQTT alerts:**
+---
+
+## Boot alert (main.lua)
+
+Send a Telegram message when the node starts (delayed 10s for WiFi/firewall):
+
+```lua
+Node.setTimeout(10000, function()
+  local name = Config.get("device.name") or "unknown"
+  local ip = Node.ip() or "no IP"
+  Telegram.broadcast(name .. " booted - " .. ip)
+end)
+```
+
+---
+
+## Home Assistant automation for MQTT alerts
 
 ```yaml
 automation:
@@ -91,5 +157,5 @@ automation:
       - action: notify.send_message
         data:
           entity_id: notify.telegram_notify
-          message: "{% raw %}{{ trigger.payload_json.value }}{% endraw %}"
+          message: "{% raw %}{{ trigger.payload }}{% endraw %}"
 ```

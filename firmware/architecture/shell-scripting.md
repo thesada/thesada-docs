@@ -86,10 +86,33 @@ Lua 5.3 runtime via the [ESP-Arduino-Lua](https://github.com/sfranzyshen/ESP-Ard
 | `Node.ip()` | Returns WiFi IP as string |
 | `Node.setTimeout(ms, fn)` | Call `fn` after `ms` milliseconds (max 8 pending timers) |
 
+**Config.get array support:**
+`Config.get` supports both object keys and array indices via dot notation:
+```lua
+Config.get("telegram.chat_ids.0")       -- first element of array
+Config.get("telegram.chat_ids.daniel")  -- named key in object
+Config.get("mqtt.broker")               -- regular nested key
+```
+
+**Telegram chat_ids format:**
+Both array and object formats are supported:
+```json
+"chat_ids": ["123456789", "-100987654321"]
+"chat_ids": {"daniel": "123456789", "family": "-100987654321"}
+```
+Object format allows `Telegram.send(Config.get("telegram.chat_ids.daniel"), msg)` for per-recipient alerts.
+
+**Script loading:**
+ScriptEngine loads two files at boot (and on `lua.reload`):
+1. `/scripts/main.lua` - runs once (boot tasks, timers, one-time setup)
+2. `/scripts/rules.lua` - event-driven rules (EventBus subscriptions, alert logic)
+
+Alert logic should go in `rules.lua`, not a separate file. Only `main.lua` and `rules.lua` are loaded automatically.
+
 **Hot reload:**
 `ScriptEngine::reload()` bumps a generation counter, destroys the Lua state, creates a fresh one, and re-executes both scripts. Stale EventBus callbacks check the generation counter and silently skip. Reload is triggered by:
 - Shell command: `lua.reload`
-- MQTT message to `<topic_prefix>/cmd/lua/reload`
+- MQTT CLI: `cli/lua.reload`
 
 **Example rules.lua:**
 ```lua
