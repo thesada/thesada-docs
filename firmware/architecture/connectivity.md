@@ -62,6 +62,23 @@ Modules and Lua scripts can add further subscriptions via `MQTTClient::subscribe
 
 ---
 
+## HA MQTT Auto-Discovery
+
+On every MQTT connect, the firmware publishes retained discovery config messages to `homeassistant/sensor/<device_id>/...` and `homeassistant/binary_sensor/<device_id>/...`. Home Assistant picks these up automatically - no manual YAML sensor config needed.
+
+Enabled by default. Disable with `mqtt.ha_discovery: false` in config.json.
+
+Discovery publishes entities for all configured sensors:
+- Temperature sensors (one per DS18B20, name from config)
+- ADS1115 channels (voltage + binary running sensor per channel)
+- Battery (percent, voltage, charge state, present)
+
+All entities are grouped under a single HA device (device name from `device.friendly_name`, manufacturer "Thesada", model "Base Node", sw_version from firmware).
+
+A manual YAML config is maintained in [thesada-cfg/ha/mqtt/owb-sensors.yaml](https://github.com/Thesada/thesada-cfg/blob/main/ha/mqtt/owb-sensors.yaml) as a reference/fallback.
+
+---
+
 ## WiFi Path (normal)
 
 - Multi-SSID: configure a list of networks; ranked by RSSI at scan time

@@ -34,6 +34,7 @@ Thesada nodes run one of two firmware approaches depending on the use case:
 | WiFi multi-SSID | Ranked by RSSI; NTP synced on connect |
 | LTE-M/NB-IoT fallback | SIM7080G modem-native MQTT over TLS; reverts to WiFi automatically |
 | TLS MQTT | CA cert from LittleFS (`/ca.crt`); ISRG Root X1 works for Let's Encrypt brokers |
+| HA MQTT discovery | Auto-registers all sensors in Home Assistant on connect; no manual YAML needed |
 | DS18B20 temperature | OneWire, multi-sensor, auto-discovery, configurable interval |
 | ADS1115 current sensing | Differential measurement, configurable gain |
 | Battery monitoring | AXP2101 voltage, state of charge, charge status; MQTT publish + low-battery alert |
