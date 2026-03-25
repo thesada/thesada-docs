@@ -15,7 +15,7 @@ Auto-discovery is enabled by default (`mqtt.ha_discovery: true`). A manual YAML 
 
 ## Prerequisites
 
-- OWB node flashed and online (thesada-fw v1.0.19+)
+- OWB node flashed and online (thesada-fw v1.1.0+)
 - Mosquitto MQTT broker running (see [MQTT Integration](../../home-assistant/mosquitto.md))
 - Telegram bot set up in Home Assistant (see [Telegram HA Integration](../../home-assistant/telegram.md))
 
@@ -30,22 +30,26 @@ Copy [ha/mqtt/owb-sensors.yaml](https://github.com/Thesada/thesada-cfg/blob/main
 mqtt: !include ha/mqtt/owb-sensors.yaml
 ```
 
-This creates 12 entities:
+Entities auto-discovered (v1.1.0+):
 
 | Entity | Type | Description |
 |---|---|---|
-| `sensor.owb_house_supply` | temperature | House loop supply (C) |
-| `sensor.owb_house_return` | temperature | House loop return (C) |
-| `sensor.owb_barn_supply` | temperature | Barn loop supply (C) |
-| `sensor.owb_barn_return` | temperature | Barn loop return (C) |
-| `sensor.owb_house_pump_current` | current | House pump RMS current (A) |
-| `sensor.owb_barn_pump_current` | current | Barn pump RMS current (A) |
-| `sensor.owb_battery_voltage` | voltage | Battery voltage (V) |
-| `sensor.owb_battery_percent` | battery | Battery level (%) |
-| `sensor.owb_battery_charging` | text | Charging / Discharging |
-| `binary_sensor.owb_house_pump_running` | running | House pump on/off |
-| `binary_sensor.owb_barn_pump_running` | running | Barn pump on/off |
-| `binary_sensor.owb_battery_present` | battery | Battery detected |
+| House Supply | temperature | House loop supply (C) |
+| House Return | temperature | House loop return (C) |
+| Barn Supply | temperature | Barn loop supply (C) |
+| Barn Return | temperature | Barn loop return (C) |
+| House Pump | current | House pump RMS current (A) |
+| Barn Pump | current | Barn pump RMS current (A) |
+| House Pump Power | power | House pump power (W) |
+| Barn Pump Power | power | Barn pump power (W) |
+| Battery | battery | Battery level (%) |
+| Battery Voltage | voltage | Battery voltage (V) |
+| Battery Charge State | text | Charging / Discharging |
+| WiFi RSSI | signal_strength | WiFi signal (dBm, diagnostic) |
+| WiFi SSID | text | Connected network (diagnostic) |
+| WiFi IP | text | Device IP address (diagnostic) |
+
+Each sensor publishes on its own topic (e.g. `thesada/owb/sensor/temperature/house_supply`). Availability via LWT on `thesada/owb/status`. WiFi diagnostics are disabled by default in HA.
 
 Verify the node is publishing:
 

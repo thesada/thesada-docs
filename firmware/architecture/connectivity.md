@@ -89,10 +89,24 @@ On every MQTT connect, the firmware publishes retained discovery config messages
 
 Enabled by default. Disable with `mqtt.ha_discovery: false` in config.json.
 
-Discovery publishes entities for all configured sensors:
-- Temperature sensors (one per DS18B20, name from config)
-- ADS1115 channels (RMS current in amps + binary running sensor per channel)
-- Battery (percent, voltage, charge state, present)
+Each sensor publishes on its own topic with a simple value (no JSON parsing needed by HA):
+
+```
+<prefix>/sensor/temperature/<slug>   -> "65.20"
+<prefix>/sensor/current/<slug>       -> "0.70"
+<prefix>/sensor/power/<slug>         -> "84.0"
+<prefix>/sensor/battery/percent      -> "100"
+<prefix>/sensor/battery/voltage      -> "4.19"
+<prefix>/sensor/battery/charging     -> "Charging"
+<prefix>/sensor/wifi/rssi            -> "-52"
+<prefix>/sensor/wifi/ssid            -> "RebelIOT"
+<prefix>/sensor/wifi/ip              -> "192.168.1.15"
+<prefix>/status                      -> "online" / "offline" (LWT)
+```
+
+Discovery template is `{{value}}` for all entities. WiFi diagnostics are `entity_category: diagnostic` (disabled by default in HA).
+
+Combined JSON payloads are still published on the original topics for backwards compatibility (Lua scripts, SD logging, cellular relay).
 
 All entities are grouped under a single HA device (device name from `device.friendly_name`, manufacturer "Thesada", model "Base Node", sw_version from firmware).
 
