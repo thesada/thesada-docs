@@ -96,10 +96,10 @@ Set an alert rule with `function: "gte"` and `value` just below current room tem
 
 | Check | Expected |
 |---|---|
-| `ntp set 1774674000` | `Time set to 2026-03-28T05:00:00Z (epoch 1774674000)` |
-| `ntp set 2026-03-28T05:00:00Z` | Same result via ISO 8601 |
-| `ntp set 0` | `Invalid time` error |
-| `ntp` (no args) | Shows current UTC time, server, offset |
+| `net.ntp set 1774674000` | `Time set to 2026-03-28T05:00:00Z (epoch 1774674000)` |
+| `net.ntp set 2026-03-28T05:00:00Z` | Same result via ISO 8601 |
+| `net.ntp set 0` | `Invalid time` error |
+| `net.ntp` (no args) | Shows current UTC time, server, offset |
 
 ---
 
@@ -121,8 +121,8 @@ Trigger an alert. Netcat should receive the POST with `{"value":"[overheat] ..."
 |---|---|
 | SD inserted, device boots | `[INF][SD] Mounted - X.X MB` + `Logging to /log00N.csv (max 1024 KB per file)` |
 | After first sensor read | CSV row: `2026-03-22T14:32:00Z,temperature,{...}` |
-| `ls /sd/` | Log files visible |
-| `cat /sd/log001.csv` | CSV rows with timestamps |
+| `fs.ls /sd/` | Log files visible |
+| `fs.cat /sd/log001.csv` | CSV rows with timestamps |
 | `"sd": { "enabled": false }` | `[INF][SD] Disabled` - no mount |
 | Config backup button | `/config_backup.json` on SD |
 
@@ -133,7 +133,7 @@ Set `sd.max_file_kb` to a small value (e.g. `2`) and wait for a few sensor reads
 [INF][SD] Rotating - /log001.csv full
 [INF][SD] Logging to /log002.csv
 ```
-Both files should appear in `ls /sd/`. Reset `max_file_kb` to `1024` when done.
+Both files should appear in `fs.ls /sd/`. Reset `max_file_kb` to `1024` when done.
 
 ---
 

@@ -143,4 +143,4 @@ All `Log::info/warn/error` calls write to:
 [INF][2026-03-22T14:32:00Z][TAG] message
 ```
 
-The timestamp is inserted between the log level and the tag. `Log::write()` checks `time(nullptr)` on every call; the format switches automatically once the clock is set. Run the `ntp` shell command to see the current sync status and whether log timestamps are active.
+The timestamp is inserted between the log level and the tag. `Log::write()` checks `time(nullptr)` on every call; the format switches automatically once the clock is set. Run the `net.ntp` shell command to see the current sync status and whether log timestamps are active.

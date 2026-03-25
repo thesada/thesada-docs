@@ -37,20 +37,20 @@ Shell::registerCommand("name", "one-line help text", [](int argc, char** argv, S
 | `battery` | Voltage, percent, charging state |
 | `sleep` | Sleep enabled/disabled, boot count, wake/sleep times, last OTA check |
 | `selftest` | 10-point check with pass/fail/warn per item |
-| `ls [path]` | Directory listing with file sizes |
-| `cat <path>` | Print file contents |
-| `rm <path>` | Remove file (echoes path) |
+| `fs.ls [path]` | Directory listing with file sizes |
+| `fs.cat <path>` | Print file contents |
+| `fs.rm <path>` | Remove file (echoes path) |
 | `write <path> <content>` | Write content to file (echoes bytes written) |
-| `mv <src> <dst>` | Rename/move (echoes src -> dst) |
-| `df` | LittleFS + SD usage in bytes/MB |
+| `fs.mv <src> <dst>` | Rename/move (echoes src -> dst) |
+| `fs.df` | LittleFS + SD usage in bytes/MB |
 | `config.get <key>` | Read config value by dot notation |
 | `config.set <key> <value>` | Set + save + reload (echoes key = value) |
 | `config.save` | Save to flash (echoes bytes written) |
 | `config.reload` | Reload from flash (echoes device name) |
 | `config.dump` | Print full config JSON |
-| `ifconfig` | SSID, IP, gateway, DNS, RSSI, MAC |
-| `ping <host>` | DNS resolve test (echoes resolved IP) |
-| `ntp` | Sync status, UTC time, epoch, server, offset. `ntp set <epoch>` or `ntp set <ISO8601>` to set manually. |
+| `net.ip` | SSID, IP, gateway, DNS, RSSI, MAC |
+| `net.ping <host>` | DNS resolve test (echoes resolved IP) |
+| `net.ntp` | Sync status, UTC time, epoch, server, offset. `net.ntp set <epoch>` or `net.ntp set <ISO8601>` to set manually. |
 | `mqtt` | Connected/disconnected, broker, port, prefix |
 | `module.list` | Compiled modules with [x]/[ ] toggles |
 | `module.status` | Runtime state per module (sensor counts, intervals, pins, SD mount, Telegram direct) |

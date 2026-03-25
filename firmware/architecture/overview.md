@@ -41,29 +41,27 @@ thesada-fw/base/
 │       └── rules.lua               <- Lua event rules (hot-reloadable)
 └── src/
     ├── main.cpp
-    ├── core/
+    ├── core/                           <- always compiled
     │   ├── Module.h                <- base class for all modules
     │   ├── ModuleRegistry.h/.cpp   <- instantiates + drives all modules
     │   ├── EventBus.h/.cpp         <- pub/sub between modules
     │   ├── Config.h/.cpp           <- config.json loader (LittleFS)
     │   ├── Log.h/.cpp              <- serial + WebSocket log relay
     │   ├── WiFiManager.h/.cpp      <- multi-SSID, RSSI-ranked, NTP sync
-    │   ├── MQTTClient.h/.cpp       <- TLS MQTT, publish queue, subscription dispatch
+    │   ├── MQTTClient.h/.cpp       <- TLS MQTT, publish queue, MQTT CLI
     │   ├── OTAUpdate.h/.cpp        <- HTTP(S) pull OTA with SHA256 verify
-    │   ├── Shell.h/.cpp            <- unified CLI (serial + WebSocket share same handlers)
-    │   ├── ScriptEngine.h/.cpp     <- Lua 5.3 runtime with EventBus + MQTT bindings
-    │   ├── Cellular.h/.cpp         <- SIM7080G modem-native MQTT over TLS
-    │   ├── PowerManager.h/.cpp     <- AXP2101 PMU init, battery getters, heartbeat LED
-    │   ├── WebServer.h/.cpp        <- dashboard, config editor, file browser, terminal
-    │   ├── dashboard.html.h        <- PROGMEM HTML for the web dashboard
-    │   └── SleepManager.h/.cpp     <- deep sleep orchestrator (RTC memory, graceful shutdown)
-    └── modules/
+    │   ├── Shell.h/.cpp            <- unified CLI (serial, WS, HTTP, MQTT)
+    │   └── SleepManager.h/.cpp     <- deep sleep orchestrator (RTC memory)
+    └── modules/                        <- optional (ENABLE_* guards)
         ├── temperature/            <- DS18B20 one-wire sensors
-        ├── ads1115/                <- ADS1115 differential current sensing
-        ├── battery/                <- AXP2101 battery monitoring (voltage, percent, charging)
-        ├── cellular/               <- cellular module (alert routing via LTE)
+        ├── ads1115/                <- ADS1115 RMS current sensing
+        ├── battery/                <- battery monitoring (requires PMU)
+        ├── powermanager/           <- AXP2101 PMU, charging, heartbeat LED
+        ├── cellular/               <- SIM7080G modem + LTE-M fallback
         ├── sd/                     <- SD card CSV logger
-        ├── telegram/               <- temperature + battery threshold alerts + webhook
+        ├── telegram/               <- Telegram Bot API (direct send)
+        ├── webserver/              <- web dashboard, REST API, WS terminal
+        ├── scriptengine/           <- Lua 5.3 scripting engine
         └── pwm/                    <- PWM output
 ```
 
@@ -79,11 +77,11 @@ setup()
     MQTTClient::begin()   -> TLS MQTT to broker; registers cmd/ota subscription
     OTAUpdate::begin()    -> registers MQTT cmd/ota handler, optional periodic check
   else:
-    Cellular::begin()     -> PMU, modem, SIM, network, modem-MQTT
-  WebServer::begin()      -> HTTP dashboard + WebSocket terminal
-  PowerManager::begin()   -> AXP2101 init (VBUS limits, TS pin, battery ADC, charger enable), LED mode
+    Cellular::begin()     -> PMU, modem, SIM, network, modem-MQTT [ENABLE_CELLULAR]
+  WebServer::begin()      -> HTTP dashboard + WebSocket terminal [ENABLE_WEBSERVER]
+  PowerManager::begin()   -> AXP2101 init (VBUS limits, TS pin, battery ADC, charger enable) [ENABLE_PMU]
   Shell::begin()          -> registers all built-in commands
-  ScriptEngine::begin()   -> Lua state, executes main.lua + rules.lua
+  ScriptEngine::begin()   -> Lua state, executes main.lua + rules.lua [ENABLE_SCRIPTENGINE]
                             registers MQTT cmd/lua/reload handler
   ModuleRegistry::begin() -> begin() on all enabled modules
   SleepManager::begin()   -> reads sleep config, sets wake deadline, inits RTC data

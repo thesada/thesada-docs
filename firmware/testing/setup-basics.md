@@ -105,7 +105,7 @@ The PEM bundle should contain ISRG Root X1 (for Let's Encrypt / GitHub OTA) and 
 ```
 [INF][2026-03-22T14:32:00Z][WiFi] Connected to myssid
 ```
-Before sync the format is `[INF][WiFi] ...`. Run `ntp` to confirm - it reports `log timestamps: active` or `log timestamps: pending sync`.
+Before sync the format is `[INF][WiFi] ...`. Run `net.ntp` to confirm - it reports `log timestamps: active` or `log timestamps: pending sync`.
 
 **Quick check via shell:**
 ```
@@ -137,17 +137,17 @@ The same commands work in both the serial terminal and the web terminal.
 | `version` | `thesada-fw vX.Y.Z (date time)` |
 | `heap` | `Free: XXXXXX B  Min: XXXXXX B  Max alloc: XXXXXX B` |
 | `uptime` | `0d 00:05:12` |
-| `ifconfig` | `WiFi: connected` + IP, SSID, RSSI, MAC |
-| `ping 8.8.8.8` | `8.8.8.8 resolved to 8.8.8.8` |
-| `ntp` | `NTP: synced  UTC: 2026-03-22T...` + `log timestamps: active` |
+| `net.ip` | `WiFi: connected` + IP, SSID, RSSI, MAC |
+| `net.ping 8.8.8.8` | `8.8.8.8 resolved to 8.8.8.8` |
+| `net.ntp` | `NTP: synced  UTC: 2026-03-22T...` + `log timestamps: active` |
 | `mqtt` | `MQTT: connected  broker: ...:8883` |
 | `module.list` | Lists enabled modules with `[x]` |
-| `ls /` | LittleFS root listing |
-| `cat /config.json` | Config JSON content |
+| `fs.ls /` | LittleFS root listing |
+| `fs.cat /config.json` | Config JSON content |
 | `write /test.txt hello` | `Wrote 5 bytes to /test.txt` |
-| `cat /test.txt` | `hello` |
-| `rm /test.txt` | `Removed` |
-| `df` | LittleFS + SD usage |
+| `fs.cat /test.txt` | `hello` |
+| `fs.rm /test.txt` | `Removed` |
+| `fs.df` | LittleFS + SD usage |
 | `config.get mqtt.broker` | Broker hostname |
 | `config.dump` | Full config JSON |
 | `selftest` | `[PASS]` / `[WARN]` lines + `=== X passed, Y failed ===` |
