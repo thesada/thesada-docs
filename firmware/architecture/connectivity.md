@@ -108,23 +108,28 @@ Response format:
 
 Any shell command works - same 30+ commands available over serial, WebSocket, HTTP, and now MQTT.
 
-Special command: `cli/file.write` - payload is `<path>\n<content>`. Use `mosquitto_pub -s` with stdin pipe (not `-m` or `-f`):
+Special command: `cli/file.write` - payload is `<path>\n<content>`. All three `mosquitto_pub` modes work (`-m`, `-f`, `-s`):
 ```bash
-printf '/scripts/rules.lua\n' | cat - rules.lua | mosquitto_pub ... -t '<prefix>/cli/file.write' -s
+mosquitto_pub ... -t '<prefix>/cli/file.write' -m '/test.txt
+hello world'
 ```
 
-**Known issues:**
-- `config.set` via MQTT CLI drops the connection (LittleFS write blocks PubSubClient keepalive). The value may not save. Use `cmd/config/push` (full config push) instead for remote config changes.
-- `config.set` no longer auto-reloads config. Run `config.reload` after to apply changes.
-- `file.write` via `mosquitto_pub -m` or `-f` writes 0 bytes. Use stdin pipe (`-s`) as shown above.
+**Notes:**
+- All CLI commands execute in `loop()` via deferred processing (not inside the PubSubClient callback). This prevents keepalive timeouts on slow operations like LittleFS writes.
+- `config.set` saves to flash but does not auto-reload. Run `config.reload` after to apply.
+- Full config replacement: use `cli/file.write` with path `/config.json` + `cli/config.reload`.
 
-### Legacy cmd/* topics (deprecated, will be removed)
+### Legacy cmd/* topics (removed in v1.2.3)
 
-| Topic | Handler |
+The `cmd/config/set`, `cmd/config/push`, and default `cmd/ota` topics have been removed. Use the CLI equivalents:
+
+| Old topic | CLI replacement |
 |---|---|
-| `<prefix>/cmd/ota` | Trigger OTA manifest check (use `cli/ota.check` instead) |
-| `<prefix>/cmd/config/set` | Set single config key (use `cli/config.set` instead) |
-| `<prefix>/cmd/config/push` | Replace full config.json. Payload: entire JSON config. Max 4 KB. |
+| `cmd/config/set` | `cli/config.set` payload: `<key> <value>` |
+| `cmd/config/push` | `cli/file.write` payload: `/config.json\n<json>` + `cli/config.reload` |
+| `cmd/ota` | `cli/ota.check` |
+
+If `ota.cmd_topic` is explicitly set in config.json, that dedicated subscription still works for backwards compatibility.
 
 Modules and Lua scripts can add further subscriptions via `MQTTClient::subscribe()` or `MQTT.publish()` / `EventBus.subscribe()`.
 
