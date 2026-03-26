@@ -76,23 +76,24 @@ flowchart TD
     C --> D{WiFi connected?}
     D -->|Yes| E[MQTTClient::begin]
     E --> F[OTAUpdate::begin]
-    D -->|No| G[Cellular::begin]
+    D -->|No| G["Cellular::begin *"]
     F --> H[Shell::begin]
     G --> H
-    H --> I[WebServer::begin]
-    I --> J[ScriptEngine::begin]
-    J --> K[PowerManager::begin]
+    H --> I["WebServer::begin *"]
+    I --> J["ScriptEngine::begin *"]
+    J --> K["PowerManager::begin *"]
     K --> L[HeartbeatLED::begin]
     L --> M[ModuleRegistry::begin]
     M --> N[SleepManager::begin]
     N --> O[Ready]
 
-    style D fill:#445,stroke:#888
-    style O fill:#363,stroke:#6a6
-    style G fill:#553,stroke:#aa6
+    style G stroke-dasharray: 5 5
+    style I stroke-dasharray: 5 5
+    style J stroke-dasharray: 5 5
+    style K stroke-dasharray: 5 5
 ```
 
-Dashed boxes are guarded by `ENABLE_*` flags - they compile out when disabled.
+Dashed boxes (*) are guarded by `ENABLE_*` flags - they compile out when disabled.
 
 ---
 
