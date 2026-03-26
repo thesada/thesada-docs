@@ -96,7 +96,7 @@ The PEM bundle should contain ISRG Root X1 (for Let's Encrypt / GitHub OTA) and 
 | Serial shows `[INF][Config]` (no error) | `config.json` parsed OK |
 | Serial shows `[INF][WiFi] Connected to <ssid>` | WiFi connects to strongest configured SSID |
 | Serial shows `[INF][MQTT] Connected` | MQTT broker reachable |
-| Serial shows `[INF][Shell] Shell ready - 27 commands` | Shell initialized |
+| Serial shows `[INF][Shell] Shell ready - xx commands` | Shell initialized - Commands available is depending on compiled modules|
 | Serial shows `[INF][Lua] /scripts/main.lua executed` | Lua boot script ran |
 | Serial shows `[INF][Lua] /scripts/rules.lua executed` | Lua rules loaded |
 | Serial shows `[INF][Boot] Ready. Type 'help' for commands.` | Boot complete |
@@ -133,7 +133,7 @@ The same commands work in both the serial terminal and the web terminal.
 
 | Command | Expected output |
 |---|---|
-| `help` | Lists all 27 commands with descriptions |
+| `help` | Lists all commands with descriptions |
 | `version` | `thesada-fw vX.Y.Z (date time)` |
 | `heap` | `Free: XXXXXX B  Min: XXXXXX B  Max alloc: XXXXXX B` |
 | `uptime` | `0d 00:05:12` |

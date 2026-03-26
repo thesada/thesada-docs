@@ -13,10 +13,10 @@ Every build on [Foothills Builds](https://youtube.com/@FoothillsBuilds) gets ful
 ## What it does
 
 - **Monitors** - temperature (DS18B20), current (ADS1115 + CT clamp), battery voltage and charge state
-- **Alerts** - threshold alerts with hysteresis via MQTT and webhook, forwarded to Telegram through Home Assistant
+- **Alerts** - lua script defined alerts with hysteresis via MQTT, Telegram or webhook
 - **Logs** - CSV data to SD card, logrotate included
 - **Updates** - over-the-air via GitHub Releases (TLS-verified, SHA256 checked)
-- **Scripted** - Lua 5.3 runtime for custom rules without recompiling
+- **Scripted** - Lua runtime for custom rules without recompiling
 
 ## Where to start
 
