@@ -87,10 +87,10 @@ flowchart TD
     M --> N[SleepManager::begin]
     N --> O[Ready]
 
-    style G stroke-dasharray: 5 5
-    style I stroke-dasharray: 5 5
-    style J stroke-dasharray: 5 5
-    style K stroke-dasharray: 5 5
+    style G stroke:#f90,stroke-dasharray: 5,5,stroke-width:3px
+    style I stroke:#f90,stroke-dasharray: 5,5,stroke-width:3px
+    style J stroke:#f90,stroke-dasharray: 5,5,stroke-width:3px
+    style K stroke:#f90,stroke-dasharray: 5,5,stroke-width:3px
 ```
 
 Dashed boxes (*) are guarded by `ENABLE_*` flags - they compile out when disabled.
