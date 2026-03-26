@@ -66,7 +66,7 @@ mosquitto_sub -h YOUR_BROKER -p 8883 \
 
 ## 2. Firmware Alerts vs HA Automations
 
-The firmware (v1.0.16+) sends alerts directly to Telegram via the Bot API when configured with `bot_token` and `chat_ids`. These use the generic alert rules in config.json (`function: gte/lte`, `value`, `message`, optional `sensors` filter).
+The firmware sends alerts directly to Telegram via the Bot API when configured with `bot_token` and `chat_ids`. Alert logic lives in `/scripts/rules.lua` on the device (Lua-driven, hot-reloadable). See [Alerts & Webhook](../../firmware/architecture/alerts.md) for details.
 
 HA automations are a second layer - useful for:
 - Cross-sensor logic (e.g. supply/return delta)

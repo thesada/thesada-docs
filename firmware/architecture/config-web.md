@@ -67,6 +67,8 @@ Accessible at `http://[device-ip]/` - requires login (credentials from `web` con
 | `/` | GET | public | Live sensor dashboard with MQTT status bar |
 | `/api/info` | GET | public | Firmware version, build date, device name |
 | `/api/state` | GET | public | Current sensor readings as JSON (includes `_mqtt` metadata) |
+| `/api/login` | POST | Basic | Exchange Basic Auth for a 1-hour Bearer token (max 4 concurrent) |
+| `/api/auth/check` | GET | Basic | Verify credentials (200 or 401, no token issued) |
 | `/api/config` | GET | yes | Read `config.json` |
 | `/api/config` | POST | yes | Write `config.json`, restart device (page auto-refreshes after 10s) |
 | `/api/backup` | POST | yes | Copy `config.json` to SD card |
@@ -75,6 +77,8 @@ Accessible at `http://[device-ip]/` - requires login (credentials from `web` con
 | `/api/ws/token` | GET | yes | Issue a 30 s IP-bound WS auth grant (required before opening WebSocket) |
 | `/ota` | POST | yes | Upload firmware `.bin` (push OTA, page auto-refreshes after 10s) |
 | `/ws/serial` | WS | token | Bidirectional terminal - log stream + all Shell commands |
+
+"yes" = Bearer token OR Basic Auth (backwards compatible). "Basic" = Basic Auth only.
 
 ![Sensor dashboard]({{ site.baseurl }}/assets/img/firmware/dashboard-sensors.png)
 
@@ -88,7 +92,8 @@ Accessible at `http://[device-ip]/` - requires login (credentials from `web` con
 - Streams all firmware log lines in real time after replay
 - Log level filter: ALL / INF / WRN / ERR / DBG (client-side, 500-line ring buffer)
 - Clear button; auto-reconnects on disconnect
-- WebSocket auth: JS fetches `/api/ws/token` (Basic Auth) before opening the socket; the server grants the caller IP 30 s access; `WS_EVT_CONNECT` verifies and closes unauthenticated connections immediately
+- WebSocket auth: JS fetches `/api/ws/token` (Bearer token) before opening the socket; the server grants the caller IP 30 s access; `WS_EVT_CONNECT` verifies and closes unauthenticated connections immediately
+- Token auth: dashboard uses `POST /api/login` to get a Bearer token stored in sessionStorage. Token persists across page refreshes, cleared on tab close or device reboot.
 
 **WebSocket / serial terminal commands:** all Shell built-ins (see Shell & Scripting page). Type `help` for the full list.
 

@@ -78,6 +78,37 @@ curl -u admin:changeme http://[ip]/api/ws/token
 # -> {"ok":true}
 ```
 
+**Bearer token auth (v1.2.4+):**
+
+```bash
+# Login - exchange Basic Auth for Bearer token
+curl -s -u admin:changeme -X POST http://[ip]/api/login
+# -> {"ok":true,"token":"<32-hex>","expires_in":3600}
+
+# Use token for admin endpoints
+TOKEN="<token from above>"
+curl -s -H "Authorization: Bearer $TOKEN" -X POST http://[ip]/api/cmd \
+  -H "Content-Type: application/json" -d '{"cmd":"version"}'
+# -> {"ok":true,"output":["thesada-fw v1.x..."]}
+
+# Invalid token
+curl -s -H "Authorization: Bearer invalidtoken" -X POST http://[ip]/api/cmd \
+  -H "Content-Type: application/json" -d '{"cmd":"version"}'
+# -> {"ok":false,"error":"Unauthorized"}
+
+# Wrong credentials
+curl -s -u admin:wrong -X POST http://[ip]/api/login
+# -> {"ok":false,"error":"Unauthorized"}
+
+# Rate limiting (after 5 failures)
+# -> {"ok":false,"error":"Too many attempts - wait 30s"}
+
+# Basic Auth still works (backwards compatible)
+curl -s -u admin:changeme -X POST http://[ip]/api/cmd \
+  -H "Content-Type: application/json" -d '{"cmd":"version"}'
+# -> {"ok":true,...}
+```
+
 ---
 
 ## 7. Config Editor
