@@ -79,12 +79,22 @@ Lua 5.3 runtime via the [ESP-Arduino-Lua](https://github.com/sfranzyshen/ESP-Ard
 | `Log.error(msg)` | Log at ERROR level |
 | `EventBus.subscribe(event, func)` | Subscribe to named event; func receives a table |
 | `MQTT.publish(topic, payload)` | Publish a message to MQTT |
+| `MQTT.subscribe(topic, fn)` | Subscribe to MQTT topic; fn(topic, payload) called on message |
+| `JSON.decode(str)` | Parse JSON string into a Lua table |
 | `Config.get(key)` | Read config value by dot-notation key (e.g. `"mqtt.broker"`) |
 | `Node.restart()` | Reboot the device |
 | `Node.version()` | Returns firmware version string |
 | `Node.uptime()` | Returns `millis()` as number |
 | `Node.ip()` | Returns WiFi IP as string |
 | `Node.setTimeout(ms, fn)` | Call `fn` after `ms` milliseconds (max 8 pending timers) |
+| `Display.clear()` | Clear OLED framebuffer [ENABLE_DISPLAY] |
+| `Display.text(x, y, str)` | Draw text at position |
+| `Display.line(x1, y1, x2, y2)` | Draw a line |
+| `Display.rect(x, y, w, h)` | Rectangle outline |
+| `Display.fill(x, y, w, h)` | Filled rectangle |
+| `Display.show()` | Send framebuffer to screen |
+| `Display.font(size)` | Set font: "small", "medium", "large" |
+| `Display.ready()` | Returns true if display initialized |
 
 **Config.get array support:**
 `Config.get` supports both object keys and array indices via dot notation:

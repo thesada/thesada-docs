@@ -62,6 +62,7 @@ thesada-fw/base/
         ├── telegram/               <- Telegram Bot API (direct send)
         ├── webserver/              <- web dashboard, REST API, WS terminal
         ├── scriptengine/           <- Lua 5.3 scripting engine
+        ├── display/                <- SSD1306 OLED (Lua-driven rendering)
         └── pwm/                    <- PWM output
 ```
 
