@@ -95,6 +95,14 @@ Lua 5.3 runtime via the [ESP-Arduino-Lua](https://github.com/sfranzyshen/ESP-Ard
 | `Display.show()` | Send framebuffer to screen |
 | `Display.font(size)` | Set font: "small", "medium", "large" |
 | `Display.ready()` | Returns true if display initialized |
+| `Display.color(r, g, b)` | Set foreground color (TFT only, 0-255 per channel) |
+| `Display.bgcolor(r, g, b)` | Set background color (TFT only) |
+| `Display.width()` | Screen width in pixels (TFT only) |
+| `Display.height()` | Screen height in pixels (TFT only) |
+| `Display.touched()` | Returns x, y if touched, nil otherwise (TFT only) |
+| `Display.led(r, g, b)` | Set RGB LED color (CYD only, 0-255) |
+
+On the OLED module, TFT-specific functions are not available. On the TFT module, `Display.show()` is a no-op (TFT draws immediately).
 
 **Config.get array support:**
 `Config.get` supports both object keys and array indices via dot notation:

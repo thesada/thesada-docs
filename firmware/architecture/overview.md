@@ -62,6 +62,7 @@ thesada-fw/base/
         ├── webserver/              <- web dashboard, REST API, WS terminal
         ├── scriptengine/           <- Lua 5.3 scripting engine
         ├── display/                <- SSD1306 OLED (Lua-driven rendering)
+        ├── tftdisplay/             <- ILI9341 TFT + XPT2046 touch (CYD board)
         └── pwm/                    <- PWM output
 ```
 
