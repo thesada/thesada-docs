@@ -33,7 +33,7 @@ description: "Compile-time config.h, runtime config.json, web dashboard, SD card
 
 ## Runtime config (`data/config.json`)
 
-See `data/config.json.example` for all fields. Key sections:
+See `examples/config.json.example` for all fields. Key sections:
 
 ```json
 {

@@ -34,7 +34,6 @@ thesada-fw/base/
 │   └── AsyncTCP/                   <- vendored AsyncTCP v3.3.2 (null-PCB crash fixes)
 ├── data/
 │   ├── config.json                 <- runtime config (LittleFS)
-│   ├── config.json.example         <- template with all fields documented
 │   ├── ca.crt                      <- TLS CA cert (required for cert verification)
 │   └── scripts/
 │       ├── main.lua                <- Lua boot script (runs once at startup)
