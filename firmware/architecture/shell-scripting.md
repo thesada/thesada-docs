@@ -100,9 +100,13 @@ Lua 5.3 runtime via the [ESP-Arduino-Lua](https://github.com/sfranzyshen/ESP-Ard
 | `Display.width()` | Screen width in pixels (TFT only) |
 | `Display.height()` | Screen height in pixels (TFT only) |
 | `Display.touched()` | Returns x, y if touched, nil otherwise (TFT only) |
+| `Display.onTouch(fn)` | Register touch callback fn(x, y), IRQ-driven (TFT only) |
+| `Display.center(y, str)` | Draw text centered horizontally (TFT only) |
+| `Display.textWidth(str)` | Return pixel width of string in current font (TFT only) |
+| `Display.backlight(bool)` | Turn TFT backlight on/off (TFT only) |
 | `Display.led(r, g, b)` | Set RGB LED color (CYD only, 0-255) |
 
-On the OLED module, TFT-specific functions are not available. On the TFT module, `Display.show()` is a no-op (TFT draws immediately).
+On the OLED module, TFT-specific functions are not available. On the TFT module, `Display.show()` is a no-op (TFT draws immediately). Touch uses the XPT2046 IRQ pin for zero-polling-overhead event detection.
 
 **Config.get array support:**
 `Config.get` supports both object keys and array indices via dot notation:
